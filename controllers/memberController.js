@@ -1,18 +1,17 @@
 const db = require('../db');
 
-// Generate a random Employee ID (EMP_XXXX)
+// Generate a random Member ID (MEM_XXXX)
 const generateEmpId = () => {
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-    let id = 'EMP_';
+    let id = 'MEM_';
     for (let i = 0; i < 4; i++) {
         id += chars[Math.floor(Math.random() * chars.length)];
     }
     return id;
 };
 
-// List all Employees
-function listEmployees(req, res) {
-    db.all(`SELECT * FROM Employee`, [], (err, rows) => {
+// List all Members
+function listMembers(req, res) {
+    db.all(`SELECT * FROM Member`, [], (err, rows) => {
         if (err) {
             return console.error(err.message);
         }
@@ -34,26 +33,26 @@ function listEmployees(req, res) {
             </style>`)
         res.write('</head>');
         res.write('<body>');
-        res.write('<h1 style="color:red;">Employees</h1>');
-        res.write('<a href="/employees/add">Add Employee</a>');
+        res.write('<h1 style="color:red;">Members</h1>');
+        res.write('<a href="/members/add">Add Member</a>');
         res.write('<table border="1">');
-        res.write('<tr><th>EMP ID</th><th>First Name</th><th>Last Name</th><th>DOB</th></tr>');
+        res.write('<tr><th>MEM ID</th><th>First Name</th><th>Last Name</th><th>DOB</th></tr>');
         rows.forEach((row) => {
             res.write(`<tr> 
                 <td>${row.id}</td>  
                 <td> ${row.firstname}</td> 
                 <td> ${row.lastname}</td> 
                 <td>${row.dob}</td> 
-                <td><a href="/employees/view?empId=${row.id}">view</a></td> 
-                <td><a href="/employees/edit?empId=${row.id}">edit</a></td> 
+                <td><a href="/members/view?memId=${row.id}">view</a></td> 
+                <td><a href="/members/edit?memId=${row.id}">edit</a></td> 
                 </tr>`);
         });
         res.write('</table>');
         res.write(
             `<script>
             document.addEventListener('DOMContentLoaded',function(){
-            console.log('print message in browser console in List Employee');
-                alert('Hi , testing Client javascript render in List Employee');
+            console.log('print message in browser console in List Member');
+                alert('Hi , testing Client javascript render in List Member');
                 })
             </script>`)
         res.write('</body>');
@@ -62,22 +61,22 @@ function listEmployees(req, res) {
     });
 }
 
-// View a single employee with contact details
-function viewEmployee(req, res, employeeId) {
-    db.get(`SELECT * FROM Employee WHERE id = ?`, [employeeId], (err, row) => {
+// View a single member with contact details
+function viewMember(req, res, memberId) {
+    db.get(`SELECT * FROM Member WHERE id = ?`, [memberId], (err, row) => {
         if (err) {
             return console.error(err.message);
         }
         if (!row) {
             res.writeHead(404, { 'Content-Type': 'text/html' });
-            res.write('<h1>Employee Not Found</h1>');
+            res.write('<h1>Member Not Found</h1>');
             return res.end();
         }
         res.writeHead(200, { 'Content-Type': 'text/html' });
-        res.write("<a href='/employees'>back</a>");
+        res.write("<a href='/members'>back</a>");
         res.write(`<h1>${row.firstname} ${row.lastname}</h1><p>DOB: ${row.dob}</p>`);
 
-        db.all(`SELECT * FROM EmployeeContact WHERE employeeId = ?`, [employeeId], (err, contacts) => {
+        db.all(`SELECT * FROM MemberContact WHERE memberId = ?`, [memberId], (err, contacts) => {
             if (err) return console.error(err.message);
             res.write('<h2>Contact Details</h2>');
             contacts.forEach((contact) => {
@@ -88,23 +87,23 @@ function viewEmployee(req, res, employeeId) {
     });
 }
 
-function viewEmployeeWithJoin(req, res, employeeId) {
+function viewMemberWithJoin(req, res, memberId) {
     const sql = `
         SELECT e.id, e.firstname, e.lastname, e.dob, 
                ec.phoneNumbers, ec.addresses 
-        FROM Employee e
-        LEFT JOIN EmployeeContact ec 
-        ON e.id = ec.employeeId
+        FROM Member e
+        LEFT JOIN MemberContact ec 
+        ON e.id = ec.memberId
         WHERE e.id = ?
     `;
 
-    db.get(sql, [employeeId], (err, row) => {
+    db.get(sql, [memberId], (err, row) => {
         if (err) {
             return console.error(err.message);
         }
         if (!row) {
             res.writeHead(404, { 'Content-Type': 'text/html' });
-            res.write('<h1>Employee Not Found</h1>');
+            res.write('<h1>Member Not Found</h1>');
             return res.end();
         }
         res.writeHead(200, { 'Content-Type': 'text/html' });
@@ -117,14 +116,14 @@ function viewEmployeeWithJoin(req, res, employeeId) {
     });
 }
 
-// Add new employee
-function addEmployee(req, res, formData) {
-    const empId = generateEmpId();
+// Add new member
+function addMember(req, res, formData) {
+    const memId = generateEmpId();
     const { firstname, lastname, dob, phoneNumbers, addresses } = formData;
 
     db.run(
-        `INSERT INTO Employee (id, firstname, lastname, dob) VALUES (?, ?, ?, ?)`,
-        [empId, firstname, lastname, dob],
+        `INSERT INTO Member (id, firstname, lastname, dob) VALUES (?, ?, ?, ?)`,
+        [memId, firstname, lastname, dob],
         function (err) {
             if (err) return console.error(err.message);
 
@@ -132,11 +131,11 @@ function addEmployee(req, res, formData) {
             const addressList = JSON.stringify(addresses.split(','));
 
             db.run(
-                `INSERT INTO EmployeeContact (employeeId, phoneNumbers, addresses) VALUES (?, ?, ?)`,
-                [empId, phones, addressList],
+                `INSERT INTO MemberContact (memberId, phoneNumbers, addresses) VALUES (?, ?, ?)`,
+                [memId, phones, addressList],
                 function (err) {
                     if (err) return console.error(err.message);
-                    res.writeHead(302, { Location: '/employees' });
+                    res.writeHead(302, { Location: '/members' });
                     res.end();
                 }
             );
@@ -144,33 +143,33 @@ function addEmployee(req, res, formData) {
     );
 }
 
-// Delete employee
-function deleteEmployee(req, res, employeeId) {
-    db.run(`DELETE FROM Employee WHERE id = ?`, [employeeId], function (err) {
+// Delete member
+function deleteMember(req, res, memberId) {
+    db.run(`DELETE FROM Member WHERE id = ?`, [memberId], function (err) {
         if (err) return console.error(err.message);
-        res.writeHead(302, { Location: '/employees' });
+        res.writeHead(302, { Location: '/members' });
         res.end();
     });
 }
 
-function editEmployee(req, res, employeeId) {
-    const sql = `SELECT e.id, e.firstname, e.lastname, e.dob FROM Employee e WHERE e.id = ?`;
+function editMember(req, res, memberId) {
+    const sql = `SELECT e.id, e.firstname, e.lastname, e.dob FROM Member e WHERE e.id = ?`;
 
-    db.get(sql, [employeeId], (err, row) => {
+    db.get(sql, [memberId], (err, row) => {
         if (err) {
             return console.error(err.message);
         }
         if (!row) {
             res.writeHead(404, { 'Content-Type': 'text/html' });
-            res.end('<h1>Employee Not Found</h1>');
+            res.end('<h1>Member Not Found</h1>');
             return;
         }
 
-        // Dynamically generate the Edit Employee HTML form
+        // Dynamically generate the Edit Member HTML form
         let html = `
             <html>
             <head>
-                <title>Edit Employee</title>
+                <title>Edit Member</title>
                 <style>
                     body { font-family: Arial, sans-serif; }
                     label { display: inline-block; width: 100px; margin-bottom: 10px; }
@@ -178,8 +177,8 @@ function editEmployee(req, res, employeeId) {
                 </style>
             </head>
             <body>
-                <h1>Edit Employee</h1>
-                <form action="/employees/update" method="POST">
+                <h1>Edit Member</h1>
+                <form action="/members/update" method="POST">
                     <input type="hidden" name="id" value="${row.id}">
                     <label>First Name:</label>
                     <input type="text" name="firstname" value="${row.firstname}">
@@ -192,7 +191,7 @@ function editEmployee(req, res, employeeId) {
                     <br>
                     <button type="submit">Update</button>
                 </form>
-                <a href="/employees">Back to List</a>
+                <a href="/members">Back to List</a>
             </body>
             </html>
         `;
@@ -203,13 +202,13 @@ function editEmployee(req, res, employeeId) {
     });
 }
 
-function updateEmployee(req, res, formData) {
+function updateMember(req, res, formData) {
     const id = formData.id;
     const firstname = formData.firstname;
     const lastname = formData.lastname;
     const dob = formData.dob;
 
-    const sql = `UPDATE Employee 
+    const sql = `UPDATE Member 
     SET firstname = ?, lastname = ?, dob = ? 
     WHERE id = ?`;
 
@@ -217,8 +216,8 @@ function updateEmployee(req, res, formData) {
         if (err) {
             return console.error(err.message);
         }
-        // After updating, redirect back to the employee list
-        res.writeHead(302, { 'Location': '/employees' });
+        // After updating, redirect back to the member list
+        res.writeHead(302, { 'Location': '/members' });
         res.end();
     });
 }
@@ -227,11 +226,11 @@ function updateEmployee(req, res, formData) {
 
 
 module.exports = {
-    listEmployees,
-    viewEmployee,
-    viewEmployeeWithJoin,
-    addEmployee,
-    editEmployee,
-    updateEmployee,
-    deleteEmployee
+    listMembers,
+    viewMember,
+    viewMemberWithJoin,
+    addMember,
+    editMember,
+    updateMember,
+    deleteMember
 };

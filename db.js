@@ -1,8 +1,8 @@
 const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
 
-// Specify the path to the SQLite database file (e.g., './database/employee.db')
-const dbPath = path.resolve(__dirname, 'database', 'employee.db');
+// Specify the path to the SQLite database file (e.g., './database/member.db')
+const dbPath = path.resolve(__dirname, 'database', 'member.db');
 console.log(dbPath);
 
 // Initialize the database connection to a file
@@ -14,10 +14,10 @@ const db = new sqlite3.Database(dbPath, (err) => {
     }
 });
 
-// Create Employee and EmployeeContact tables if they don't exist
+// Create Member and MemberContact tables if they don't exist
 db.serialize(() => {
     db.run(`
-        CREATE TABLE IF NOT EXISTS Employee (
+        CREATE TABLE IF NOT EXISTS Member (
             id TEXT PRIMARY KEY,
             firstname TEXT NOT NULL,
             lastname TEXT NOT NULL,
@@ -26,12 +26,12 @@ db.serialize(() => {
     `);
 
     db.run(`
-        CREATE TABLE IF NOT EXISTS EmployeeContact (
+        CREATE TABLE IF NOT EXISTS MemberContact (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            employeeId TEXT NOT NULL,
+            memberId TEXT NOT NULL,
             phoneNumbers TEXT NOT NULL,
             addresses TEXT NOT NULL,
-            FOREIGN KEY (employeeId) REFERENCES Employee(id) ON DELETE CASCADE
+            FOREIGN KEY (memberId) REFERENCES Member(id) ON DELETE CASCADE
         )
     `);
 });
