@@ -2,6 +2,7 @@ const db = require('../db');
 
 // Generate a random Member ID (MEM_XXXX)
 const generateEmpId = () => {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
     let id = 'MEM_';
     for (let i = 0; i < 4; i++) {
         id += chars[Math.floor(Math.random() * chars.length)];
